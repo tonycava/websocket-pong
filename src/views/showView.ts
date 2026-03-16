@@ -5,6 +5,7 @@ const views = {
   overlay: document.getElementById('ui-layer')!,
   canvas: document.getElementById('game-canvas')!,
   gameName: document.getElementById('game-name-display')!,
+  endGame: document.getElementById('game-over-view')!,
 };
 
 export function showView(viewName: keyof typeof views | "game") {

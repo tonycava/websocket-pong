@@ -7,13 +7,20 @@ import { socket } from "./lib/socket.ts";
 import { showView } from "./views/showView.ts";
 import type { GameState } from "./types/GameState.ts";
 import { Scoreboard } from "./ui/ScoreBoard.ts";
-import lookup from "socket.io-client";
+
+const app = new Application();
 
 const ball = new Ball(GAME_SETTINGS.COLORS.BALL, GAME_SETTINGS.BALL_SIZE);
 
 const racket1 = new Racket(GAME_SETTINGS.COLORS.PLAYER, GAME_SETTINGS.RACKET_WIDTH, 720 - 550);
 const racket2 = new Racket(GAME_SETTINGS.COLORS.PLAYER, GAME_SETTINGS.RACKET_WIDTH, 720 - 550);
 const scoreBoard = new Scoreboard();
+
+export const endGame = (data: any) => {
+  console.log("End Game Data:", data);
+  app.destroy();
+  showView('endGame');
+}
 
 export const runGame = (gameState: GameState) => {
   ball.x = gameState.ballPosition.x;
@@ -65,8 +72,6 @@ const resize = (app?: Application) => {
 }
 
 export const initGame = async (gameState: GameState) => {
-  const app = new Application();
-
   await app.init({
     background: GAME_SETTINGS.COLORS.BACKGROUND,
     // Note: removed `resizeTo: window` so we can control scaling via CSS and
@@ -83,78 +88,13 @@ export const initGame = async (gameState: GameState) => {
 
   Keyboard.initialize(gameState.roomId);
 
-  ball.x = gameState.ballPosition.x;
-  ball.y = gameState.ballPosition.y;
-
-  racket1.x = gameState.players[0].racket.x;
-  racket1.y = gameState.players[0].racket.y;
-
-  racket2.x = gameState.players[1].racket.x;
-  racket2.y = gameState.players[1].racket.y;
-
+  runGame(gameState);
 
   socket.on("matchScore", (data) => {
     scoreBoard.toShow(data.toShow)
   })
 
-
   app.stage.addChild(ball, racket1, racket2, scoreBoard);
-
-  /*
-    // Pass names to your scoreboard class
-
-    app.stage.addChild(leftPaddle, rightPaddle, ball, scoreBoard);
-
-
-
-    await layout();
-    window.addEventListener('resize', layout);
-
-    app.ticker.add((ticker) => {
-      const p1Dir = Keyboard.getAxis('a', 'q');
-      leftPaddle.update(p1Dir, app.screen.height, ticker.deltaTime);
-
-      const p2Dir = Keyboard.getAxis('arrowup', 'arrowdown');
-      rightPaddle.update(p2Dir, app.screen.height, ticker.deltaTime);
-
-      ball.update(ticker.deltaTime);
-
-      // Border Collision
-      if (ball.y - ball.radius < 0 || ball.y + ball.radius > app.screen.height) {
-        ball.bounceY();
-      }
-
-      // Scoring
-      if (ball.x < 0 || ball.x > app.screen.width) {
-        if (ball.x < 0) scoreBoard.incrementRight();
-        else scoreBoard.incrementLeft();
-
-        ball.resetInCenter(app);
-        ball.resetVelocity();
-        ball.bounceX();
-      }
-
-      // Paddle Collision
-      [leftPaddle, rightPaddle].forEach((paddle, idx) => {
-        const b = ball.getBounds();
-        const p = paddle.getBounds();
-
-        const isColliding = !(
-          b.x > p.x + p.width ||
-          b.x + b.width < p.x ||
-          b.y > p.y + p.height ||
-          b.y + b.height < p.y
-        );
-
-        if (isColliding) {
-          ball.bounceX();
-          ball.velocity.x *= 1.05;
-          if (idx === 0) ball.x = p.x + p.width + 1;
-          else ball.x = p.x - ball.width - 1;
-        }
-      });
-    });
-    */
 };
 
 // --- DOM Listener to start everything ---

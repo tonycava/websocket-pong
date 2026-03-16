@@ -48,11 +48,32 @@
     </div>
 
   </div>
+
+  <div id="game-over-view" class="container-view menu-card" style="display: none;">
+    <h1 id="result-title" class="pong-title winner" style="font-size: 2.5rem;">YOU WIN!</h1>
+
+    <div class="result-stats">
+      <div class="stat-box">
+        <span class="stat-label" id="res-my-name">Player</span>
+        <span class="stat-value" id="res-my-score">11</span>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="stat-box">
+        <span class="stat-label" id="res-enemy-name">Opponent</span>
+        <span class="stat-value" id="res-enemy-score">8</span>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button onclick="location.reload()" id="exit-btn" class="exit-btn">MAIN MENU</button>
+    </div>
+  </div>
+
+
 </div>
 
 <div id="game-name-display">Hello world</div>
 <canvas id="game-canvas"></canvas>
-
 
 <script type="module" src="/src/main.ts"></script>
 </body>

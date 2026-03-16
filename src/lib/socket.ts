@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 import { showView } from "../views/showView.ts";
-import { initGame, runGame } from "../main.ts";
+import { endGame, initGame, runGame } from "../main.ts";
 
 export const socket = io("http://localhost:3000")
 
@@ -29,4 +29,8 @@ socket.on("matchStart", (data) => {
 
 socket.on("matchUpdate", (data) => {
   runGame(data)
+})
+
+socket.on("matchEnd", (data) => {
+  endGame(data)
 })

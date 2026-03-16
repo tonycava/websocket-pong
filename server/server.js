@@ -126,6 +126,13 @@ setInterval(() => {
             if ((ball.x + BALL_RADIUS) < 0) game.players[1].score++;
             else game.players[0].score++;
 
+            if (game.players[1].score === 10 || game.players[0].score === 10) {
+                const winner = game.players[1].score === 10 ? game.players[1].playerName : game.players[0].playerName;
+                io.to(roomId).emit("matchEnd", { winner });
+                games.delete(roomId);
+                return;
+            }
+
             io.to(roomId).emit("matchScore", { toShow: `${game.players[1].playerName}: ${game.players[1].score}  | ${game.players[0].playerName}: ${game.players[0].score}` });
 
             //ball.resetInCenter(app);
