@@ -94,6 +94,7 @@ io.on("connection", (socket) => {
                     }
 
                     io.to(roomId).emit("matchStart", gameState);
+                    io.to(roomId).emit("matchScore", { toShow: `${gameState.players[1].playerName}: ${gameState.players[1].score}  | ${gameState.players[0].playerName}: ${gameState.players[0].score}` });
                     clearInterval(countdownInterval);
                     games.set(roomId, gameState)
                 }
@@ -125,6 +126,8 @@ setInterval(() => {
             if ((ball.x + BALL_RADIUS) < 0) game.players[1].score++;
             else game.players[0].score++;
 
+            io.to(roomId).emit("matchScore", { toShow: `${game.players[1].playerName}: ${game.players[1].score}  | ${game.players[0].playerName}: ${game.players[0].score}` });
+
             //ball.resetInCenter(app);
             ball.x = (DEVICE_WIDTH / 2) - 20;
             ball.y = (DEVICE_HEIGHT / 2) - 20;
@@ -140,44 +143,48 @@ setInterval(() => {
         racket1.update(Keyboard.getAxis(game.players[0].keys), dt);
         racket2.update(Keyboard.getAxis(game.players[1].keys), dt);
 
-        [racket1, racket2].forEach((p, idx) => {
-            // 1. Calculate Ball Bounds (assuming ball.x/y is the center)
-            const ballLeft = ball.x - ball.radius;
-            const ballRight = ball.x + ball.radius;
-            const ballTop = ball.y - ball.radius;
-            const ballBottom = ball.y + ball.radius;
+        // --- Inside your setInterval loop in the server ---
 
-            // 2. Racket Bounds (Assuming p.x/y is top-left)
-            const racketLeft = p.x;
-            const racketRight = p.x + p.width;
-            const racketTop = p.y;
-            const racketBottom = p.y + p.height;
+// 1. Define helper for AABB check
+        const checkCollision = (ball, racket, ballRadius, racketWidth, racketHeight) => {
+            // Ball bounds (treating ball as a square for AABB, or use radius)
+            const bLeft = ball.x;
+            const bRight = ball.x + (ballRadius);
+            const bTop = ball.y;
+            const bBottom = ball.y + (ballRadius);
 
-            // 3. Check for overlap
-            const isColliding =
-                ballRight > racketLeft &&
-                ballLeft < racketRight &&
-                ballBottom > racketTop &&
-                ballTop < racketBottom;
+            // Racket bounds
+            const rLeft = racket.x;
+            const rRight = racket.x + racketWidth;
+            const rTop = racket.y;
+            const rBottom = racket.y + racketHeight;
 
-            if (isColliding) {
-                // Reverse horizontal direction
+            return bLeft < rRight && bRight > rLeft && bTop < rBottom && bBottom > rTop;
+        };
+
+// 2. Constants for dimensions (ensure these match your classes)
+        const RACKET_WIDTH = 20;
+        const RACKET_HEIGHT = 720 - 550; // As per your code: 170
+
+// 3. Perform the checks
+        const rackets = [racket1, racket2];
+        rackets.forEach((r, index) => {
+            if (checkCollision(ball, r, BALL_RADIUS, RACKET_WIDTH, RACKET_HEIGHT)) {
                 ball.bounceX();
 
-                // Speed up slightly
-                ball.velocity.x *= 1.05;
+                // Prevent "sticky" collisions by pushing the ball out of the racket
+                if (index === 0) { // Left Racket
+                    ball.x = r.x + RACKET_WIDTH + 1;
+                } else { // Right Racket
+                    ball.x = r.x - BALL_RADIUS - 1;
+                }
 
-                // 4. FIX: "Un-stick" the ball from the racket
-                // If it hit the left racket (idx 0), push it to the right edge of the racket
-                if (idx === 0) {
-                    ball.x = racketRight + ball.radius;
-                }
-                // If it hit the right racket (idx 1), push it to the left edge of the racket
-                else {
-                    ball.x = racketLeft - ball.radius;
-                }
+                // Optional: Increase speed slightly on hit
+                ball.velocity.x *= 1.05;
+                ball.velocity.y *= 1.05;
             }
         });
+
 
         const gameState = {
             state: "STARTED",
@@ -195,7 +202,7 @@ setInterval(() => {
                     playerName: game.players[1].playerName,
                     racket: { x: game.players[1].racket.x, y: racket2.y },
                     keys: game.players[1].keys,
-                    score: game.players[0].score,
+                    score: game.players[1].score,
                 }
             ]
         }

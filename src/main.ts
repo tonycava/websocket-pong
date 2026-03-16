@@ -6,11 +6,14 @@ import { Ball } from "./entities/Ball";
 import { socket } from "./lib/socket.ts";
 import { showView } from "./views/showView.ts";
 import type { GameState } from "./types/GameState.ts";
+import { Scoreboard } from "./ui/ScoreBoard.ts";
+import lookup from "socket.io-client";
 
 const ball = new Ball(GAME_SETTINGS.COLORS.BALL, GAME_SETTINGS.BALL_SIZE);
 
 const racket1 = new Racket(GAME_SETTINGS.COLORS.PLAYER, GAME_SETTINGS.RACKET_WIDTH, 720 - 550);
 const racket2 = new Racket(GAME_SETTINGS.COLORS.PLAYER, GAME_SETTINGS.RACKET_WIDTH, 720 - 550);
+const scoreBoard = new Scoreboard();
 
 export const runGame = (gameState: GameState) => {
   ball.x = gameState.ballPosition.x;
@@ -21,8 +24,6 @@ export const runGame = (gameState: GameState) => {
 
   racket2.x = gameState.players[1].racket.x;
   racket2.y = gameState.players[1].racket.y;
-
-  console.log("Game state updated:", gameState);
 }
 
 // Resize helper that preserves a 1280x720 (16:9) aspect ratio.
@@ -92,11 +93,15 @@ export const initGame = async (gameState: GameState) => {
   racket2.y = gameState.players[1].racket.y;
 
 
-  app.stage.addChild(ball, racket1, racket2);
+  socket.on("matchScore", (data) => {
+    scoreBoard.toShow(data.toShow)
+  })
+
+
+  app.stage.addChild(ball, racket1, racket2, scoreBoard);
 
   /*
     // Pass names to your scoreboard class
-    const scoreBoard = new Scoreboard(player1Name, player2Name);
 
     app.stage.addChild(leftPaddle, rightPaddle, ball, scoreBoard);
 
@@ -158,6 +163,7 @@ document.getElementById('play-btn')?.addEventListener('click', () => {
   if (!playerName.trim()) return;
 
   socket.emit('joinMatchmaking', { playerName })
+  localStorage.setItem('playerName', playerName)
   document.getElementById("my-name-display")!.innerHTML = playerName.trim();
   showView('waiting');
 });

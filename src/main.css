@@ -24,6 +24,10 @@ body, html {
     height: 100%;
 }
 
+#game-name-display {
+    display: none;
+}
+
 .ui-overlay {
     position: fixed;
     inset: 0;
