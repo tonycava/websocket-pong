@@ -2,6 +2,7 @@ import type { Position } from "./common/Position.ts";
 
 export type GameState = {
   state: "STARTED",
+  matchScore: string;
   roomId: string,
   ballPosition: Position,
   players: [

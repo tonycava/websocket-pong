@@ -1,4 +1,4 @@
-import { DEVICE_HEIGHT } from "./server.js";
+import { DEVICE_HEIGHT } from "./constant.js";
 
 export class Racket {
     x;

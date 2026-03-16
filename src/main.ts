@@ -20,7 +20,6 @@ export const endGame = (data: any) => {
   console.log("End Game Data:", data);
 
   const winner = socket.id === data.winnerSocketId;
-  console.log("winner", winner);
   const h1 = document.createElement("h1");
   h1.id = "result-title"
   h1.classList.add("pong-title");
@@ -45,6 +44,7 @@ export const endGame = (data: any) => {
   showView('endGame');
   socket.off("matchScore")
   socket.emit("leaveRoom", { roomId: data.roomId });
+  localStorage.removeItem("playerName")
   app.destroy();
 }
 
@@ -120,6 +120,8 @@ export const initGame = async (gameState: GameState) => {
     scoreBoard.toShow(data.toShow)
   })
 
+  scoreBoard.toShow(gameState.matchScore)
+
   app.stage.addChild(ball, racket1, racket2, scoreBoard);
 };
 
@@ -133,3 +135,7 @@ document.getElementById('play-btn')?.addEventListener('click', () => {
   document.getElementById("my-name-display")!.innerHTML = playerName.trim();
   showView('waiting');
 });
+
+document.getElementById("exit-btn")!.addEventListener("click", () => {
+  showView("menu")
+})

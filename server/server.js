@@ -4,6 +4,9 @@ import { Server } from "socket.io";
 import { Ball } from "./Ball.js";
 import { Racket } from "./Racket.js";
 import { Keyboard } from "./Keyboard.js";
+import { checkCollision } from "./collision.js";
+import { DEVICE_HEIGHT, DEVICE_WIDTH, BALL_RADIUS, RACKET_WIDTH, MAX_POINT } from "./constant.js"
+import { buildScoreText } from "./buildScoreText.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -12,10 +15,6 @@ const io = new Server(server, { cors: { origin: "*" } });
 const waitingPlayers = [];
 
 const games = new Map();
-
-export const DEVICE_WIDTH = 1280;
-export const DEVICE_HEIGHT = 720;
-export const BALL_RADIUS = 40;
 
 io.on("connection", (socket) => {
 
@@ -70,9 +69,10 @@ io.on("connection", (socket) => {
                     const gameState = {
                         state: "STARTED",
                         roomId,
+                        matchScore: buildScoreText({ playerName: player1.playerName, score: 0 }, { playerName: player2.playerName, score: 0 }),
                         ballPosition: {
-                            x: (DEVICE_WIDTH / 2) - 20,
-                            y: (DEVICE_HEIGHT / 2) - 20,
+                            x: (DEVICE_WIDTH / 2),
+                            y: (DEVICE_HEIGHT / 2),
                             velocity: { x: 200, y: 200 }
                         },
                         players: [
@@ -94,7 +94,6 @@ io.on("connection", (socket) => {
                     }
 
                     io.to(roomId).emit("matchStart", gameState);
-                    io.to(roomId).emit("matchScore", { toShow: `${gameState.players[1].playerName}: ${gameState.players[1].score}  | ${gameState.players[0].playerName}: ${gameState.players[0].score}` });
                     clearInterval(countdownInterval);
                     games.set(roomId, gameState)
                 }
@@ -117,27 +116,32 @@ setInterval(() => {
         const ball = new Ball(game.ballPosition.x, game.ballPosition.y, game.ballPosition.velocity);
         ball.update(dt);
 
+        // Bounce on top/bottom using center + radius
         if (ball.y - ball.radius < 0 || ball.y + ball.radius > DEVICE_HEIGHT) {
             ball.bounceY();
+
+            // push back inside if it overshot
+            if (ball.y - ball.radius < 0) ball.y = ball.radius;
+            if (ball.y + ball.radius > DEVICE_HEIGHT) ball.y = DEVICE_HEIGHT - ball.radius;
         }
 
-        // Scoring
-        if ((ball.x + BALL_RADIUS) < 0 || ball.x > DEVICE_WIDTH) {
-            if ((ball.x + BALL_RADIUS) < 0) game.players[1].score++;
+        // Scoring - use center +/- radius for exit checks
+        if ((ball.x + ball.radius) < 0 || (ball.x - ball.radius) > DEVICE_WIDTH) {
+            if ((ball.x + ball.radius) < 0) game.players[1].score++;
             else game.players[0].score++;
 
-            if (game.players[1].score === 10 || game.players[0].score === 10) {
-                const winner = game.players.find(p => p.score === 10);
+            if (game.players[1].score === MAX_POINT || game.players[0].score === MAX_POINT) {
+                const winner = game.players.find(p => p.score === MAX_POINT);
                 io.to(roomId).emit("matchEnd", { roomId, winnerSocketId: winner.socketId, players: game.players });
                 games.delete(roomId);
                 return;
             }
 
-            io.to(roomId).emit("matchScore", { toShow: `${game.players[1].playerName}: ${game.players[1].score}  | ${game.players[0].playerName}: ${game.players[0].score}` });
 
-            //ball.resetInCenter(app);
-            ball.x = (DEVICE_WIDTH / 2) - 20;
-            ball.y = (DEVICE_HEIGHT / 2) - 20;
+            io.to(roomId).emit("matchScore", { toShow: buildScoreText({ playerName: game.players[1].playerName, score: game.players[1].score }, { playerName: game.players[0].playerName, score: game.players[0].score }) });
+
+            ball.x = (DEVICE_WIDTH / 2);
+            ball.y = (DEVICE_HEIGHT / 2);
             ball.resetVelocity();
             ball.bounceX();
         }
@@ -150,51 +154,26 @@ setInterval(() => {
         racket1.update(Keyboard.getAxis(game.players[0].keys), dt);
         racket2.update(Keyboard.getAxis(game.players[1].keys), dt);
 
-        // --- Inside your setInterval loop in the server ---
-
-// 1. Define helper for AABB check
-        const checkCollision = (ball, racket, ballRadius, racketWidth, racketHeight) => {
-            // Ball bounds (treating ball as a square for AABB, or use radius)
-            const bLeft = ball.x;
-            const bRight = ball.x + (ballRadius);
-            const bTop = ball.y;
-            const bBottom = ball.y + (ballRadius);
-
-            // Racket bounds
-            const rLeft = racket.x;
-            const rRight = racket.x + racketWidth;
-            const rTop = racket.y;
-            const rBottom = racket.y + racketHeight;
-
-            return bLeft < rRight && bRight > rLeft && bTop < rBottom && bBottom > rTop;
-        };
-
-// 2. Constants for dimensions (ensure these match your classes)
-        const RACKET_WIDTH = 20;
-        const RACKET_HEIGHT = 720 - 550; // As per your code: 170
-
-// 3. Perform the checks
         const rackets = [racket1, racket2];
-        rackets.forEach((r, index) => {
-            if (checkCollision(ball, r, BALL_RADIUS, RACKET_WIDTH, RACKET_HEIGHT)) {
-                ball.bounceX();
-
-                // Prevent "sticky" collisions by pushing the ball out of the racket
-                if (index === 0) { // Left Racket
+        rackets.forEach((r) => {
+            if (checkCollision(ball, r)) {
+                // reflect velocity
+                if (r.x === 30) { // Left Racket
                     ball.x = r.x + RACKET_WIDTH + 1;
                 } else { // Right Racket
                     ball.x = r.x - BALL_RADIUS - 1;
                 }
 
-                // Optional: Increase speed slightly on hit
-                ball.velocity.x *= 1.05;
-                ball.velocity.y *= 1.05;
+
+                ball.bounceX();
             }
         });
 
 
         const gameState = {
             state: "STARTED",
+            roomId,
+            matchScore: buildScoreText({ playerName: game.players[1].playerName, score: game.players[1].score }, { playerName: game.players[0].playerName, score: game.players[0].score }),
             ballPosition: ball.toObject(),
             players: [
                 {
@@ -219,3 +198,4 @@ setInterval(() => {
         io.to(roomId).emit("matchUpdate", gameState);
     }
 }, 1000 / 60);
+
