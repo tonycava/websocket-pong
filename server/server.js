@@ -127,8 +127,8 @@ setInterval(() => {
             else game.players[0].score++;
 
             if (game.players[1].score === 10 || game.players[0].score === 10) {
-                const winner = game.players[1].score === 10 ? game.players[1].playerName : game.players[0].playerName;
-                io.to(roomId).emit("matchEnd", { winner });
+                const winner = game.players.find(p => p.score === 10);
+                io.to(roomId).emit("matchEnd", { roomId, winnerSocketId: winner.socketId, players: game.players });
                 games.delete(roomId);
                 return;
             }

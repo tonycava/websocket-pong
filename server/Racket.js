@@ -20,7 +20,6 @@ export class Racket {
      */
     update(direction, deltaTime) {
         this.y += direction * this.speed * deltaTime;
-        console.log("Racket update: direction", direction, "speed", this.speed, "deltaTime", deltaTime, "new y", this.y)
 
         const minY = this.halfHeight;
         const maxY = DEVICE_HEIGHT - this.halfHeight;

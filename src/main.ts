@@ -18,8 +18,34 @@ const scoreBoard = new Scoreboard();
 
 export const endGame = (data: any) => {
   console.log("End Game Data:", data);
-  app.destroy();
+
+  const winner = socket.id === data.winnerSocketId;
+  console.log("winner", winner);
+  const h1 = document.createElement("h1");
+  h1.id = "result-title"
+  h1.classList.add("pong-title");
+
+  if (winner) {
+    h1.classList.add("winner");
+    h1.textContent = "YOU WIN!";
+  } else {
+    h1.classList.add("loser");
+    h1.textContent = "DEFEAT";
+  }
+
+
+  document.getElementById("res-my-name")!.textContent = data.players[0].playerName;
+  document.getElementById("res-my-score")!.textContent = data.players[0].score;
+
+  document.getElementById("res-enemy-name")!.textContent = data.players[1].playerName;
+  document.getElementById("res-enemy-score")!.textContent = data.players[1].score;
+
+  document.getElementById('game-over-view')!.prepend(h1)
+
   showView('endGame');
+  socket.off("matchScore")
+  socket.emit("leaveRoom", { roomId: data.roomId });
+  app.destroy();
 }
 
 export const runGame = (gameState: GameState) => {
