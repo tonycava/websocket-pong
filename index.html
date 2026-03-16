@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <link rel="icon" type="image/svg+xml" href="/vite.svg"/>
+  <link rel="stylesheet" href="/src/main.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>pixi.js</title>
+</head>
+<body>
+
+<div id="ui-layer" class="ui-overlay">
+  <!-- 1. Main Menu -->
+  <div id="menu-view" class="menu-card">
+    <h1 class="pong-title">PONG</h1>
+    <input type="text" id="player-name" class="player-input" placeholder="Your Name" maxlength="12"/>
+    <button id="play-btn" class="play-btn">FIND MATCH</button>
+  </div>
+
+  <!-- 2. Loading State (Connecting) -->
+  <div id="loader-view" class="container-view">
+    <div class="spinner"></div>
+    <div class="status-text" id="loader-status">Connecting to server...</div>
+  </div>
+
+  <!-- 3. Waiting Room (Matching) -->
+  <div id="waiting-room-view" class="container-view menu-card waiting-room">
+    <h2 style="margin-top: 0;">Waiting Room</h2>
+    <div class="status-text pulse" id="matchmaking-status">Searching for opponent...</div>
+
+    <div class="player-slots">
+      <div class="slot occupied" id="slot-me">
+        <div class="slot-name" id="my-name-display">Player</div>
+        <div class="slot-status" style="color: var(--accent)">Ready</div>
+      </div>
+
+      <div class="vs-badge">VS</div>
+
+      <div class="slot enemy" id="slot-enemy">
+        <div class="slot-name" id="enemy-name-display">???</div>
+        <div class="slot-status" id="enemy-status-display">Searching</div>
+      </div>
+
+    </div>
+
+    <div class="countdown-text" id="match-countdown" style="display: none;">
+      The match will start in <span id="secondsCountDown">5s</span>.
+    </div>
+
+  </div>
+</div>
+
+<canvas id="game-canvas"></canvas>
+
+
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
