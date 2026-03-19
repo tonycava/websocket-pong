@@ -146,7 +146,7 @@ setInterval(() => {
             ball.bounceX();
         }
 
-        console.dir(game, { depth: null });
+        //console.dir(game, { depth: null });
 
         const racket1 = new Racket(game.players[0].racket.x, game.players[0].racket.y, DEVICE_HEIGHT - 550);
         const racket2 = new Racket(game.players[1].racket.x, game.players[1].racket.y, DEVICE_HEIGHT - 550);

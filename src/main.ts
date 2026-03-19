@@ -8,6 +8,9 @@ import { showView } from "./views/showView.ts";
 import type { GameState } from "./types/GameState.ts";
 import { Scoreboard } from "./ui/ScoreBoard.ts";
 
+export const DEVICE_WIDTH  = 1280;
+export const DEVICE_HEIGHT  = 720;
+
 const app = new Application();
 
 const ball = new Ball(GAME_SETTINGS.COLORS.BALL, GAME_SETTINGS.BALL_SIZE);
@@ -102,8 +105,8 @@ export const initGame = async (gameState: GameState) => {
     background: GAME_SETTINGS.COLORS.BACKGROUND,
     // Note: removed `resizeTo: window` so we can control scaling via CSS and
     // keep renderer resolution fixed for consistent game logic.
-    width: 1280,
-    height: 720,
+    width: DEVICE_WIDTH,
+    height: DEVICE_HEIGHT,
     antialias: true,
     canvas: document.getElementById('game-canvas') as HTMLCanvasElement
   });

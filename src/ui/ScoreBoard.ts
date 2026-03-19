@@ -1,11 +1,14 @@
 import { Text, Container, TextStyle } from 'pixi.js';
+import { DEVICE_WIDTH } from "../main.ts";
 
 export class Scoreboard extends Container {
-  private display: Text;
+  private readonly display: Text;
 
   constructor() {
     super();
     this.display = new Text({
+      x: DEVICE_WIDTH / 2,
+      y: 10,
       text: "",
       style: new TextStyle({
         fill: 0xffffff,
@@ -15,6 +18,8 @@ export class Scoreboard extends Container {
         align: 'center'
       })
     });
+
+    this.display.anchor.set(0.5, 0);
 
     // Center the text object relative to its own position
     this.addChild(this.display);
