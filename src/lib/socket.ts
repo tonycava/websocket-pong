@@ -2,7 +2,7 @@ import { io } from "socket.io-client";
 import { showView } from "../views/showView.ts";
 import { endGame, initGame, runGame } from "../main.ts";
 
-export const socket = io("http://localhost:3000")
+export const socket = io(import.meta.env.VITE_WEBSOCKET_URL)
 
 socket.on("matchFound", (data) => {
   // Update UI for the found opponent
